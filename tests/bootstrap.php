@@ -13,7 +13,7 @@ if ($_ENV['APP_DEBUG'] ?? $_SERVER['APP_DEBUG'] ?? false) {
 }
 
 if (($_ENV['APP_ENV'] ?? $_SERVER['APP_ENV'] ?? null) === 'test') {
-    if (!is_dir(dirname(__DIR__) . '/var')) {
+    if (! is_dir(dirname(__DIR__) . '/var')) {
         mkdir(dirname(__DIR__) . '/var', 0777, true);
     }
 
@@ -22,6 +22,7 @@ if (($_ENV['APP_ENV'] ?? $_SERVER['APP_ENV'] ?? null) === 'test') {
         unlink($testDb);
     }
 
+    $exitCode = 0;
     passthru('php bin/console app:db:init --env=test', $exitCode);
 
     if ($exitCode !== 0) {
