@@ -140,6 +140,16 @@ Internally, timestamp values used for querying and comparisons will be normalize
 If this were a production system, I would likely standardize even more aggressively, for example by storing epoch timestamps or a single database-friendly UTC format everywhere.
 
 ---
+## Tradeoffs
+- Didn't use Doctrine ORM because I wanted to keep the architecture simple and easy to reason about. For a proof-of-concept, v1 I felt it wasn't necessary to make Doctrine entities and manage those with the ORM.
+- I didn't use DTOs and the ViewerEventIngestionService is bloated with validation and other domain logic I would distribute in Hydrator or Transformer classes.
+
+- I chose SQLite because the PRD explicitly pushed for a lightweight v1 and Symfony is request-scoped, so in-memory state would not be shared across requests. I gained simplicity, easy setup, and persistence across requests, but gave up production-grade concurrency and throughput. At larger scale, I’d likely move to Postgres, Redis, or a streaming architecture.
+- Raw events in watch_session_events, current session state in watch_sessions, I gained fast reads for active session counts and session details, but took on the complexity of maintaining a derived snapshot during ingestion. It’s a simpler version of an event-log-plus-projection approach.
+- I processed events directly in the request path. I gained clarity and easier reasoning for a v1, but I did not fully solve spike durability or high-throughput buffering. In production, I’d likely put a queue or log in front of the write path.
+- I prioritized unit tests around ingestion/session logic and a few functional endpoint tests. I gained confidence in the highest-risk business logic within the timebox, but did not try to build an exhaustive test suite.
+- I defined active sessions using a 45-second threshold because heartbeats arrive every 30 seconds. I gained a simple, explainable approximation of real-time activity, but this does not guarantee exact viewer counts at every second. It’s a pragmatic compromise for a v1 dashboard metric.
+---
 
 ## Why SQLite?
 I chose SQLite for this implementation because the PRD explicitly encourages keeping storage lightweight.
