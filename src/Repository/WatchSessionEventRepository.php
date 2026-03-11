@@ -70,7 +70,7 @@ class WatchSessionEventRepository
                 quality
             FROM watch_session_events
             WHERE session_id = :sessionId
-            ORDER BY sdk_event_timestamp ASC, id ASC
+            ORDER BY sdk_event_timestamp ASC, event_row_id ASC
         SQL;
 
         // TODO - create WatchSessionEventCollection, hydrate it with this data, and return

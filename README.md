@@ -1,4 +1,5 @@
 # Watch Session Tracker
+Approximately 2–3 hours including testing and documentation.
 
 Proof-of-concept real-time watch session tracking service for FloSports.
 
@@ -7,7 +8,16 @@ This service ingests viewer events from a player SDK, tracks active watch sessio
 The goal of this implementation is to satisfy the core requirements of the PRD with a simple, understandable architecture that is easy to discuss and extend.
 
 ---
+## Technologies Used
+- PHP 8.4
+- Symfony 8.0
+- SQLite 3.46
+- Doctrine DBAL
+- PHPUnit 13
+---
 ## Important Commands
+This service runs locally on port 8000.
+
 Spin up the environment:
 
 ```bash
@@ -18,6 +28,35 @@ That should create a SQLite database w/schema and start the server.
 Run Unit and Functional Tests:
 ```bash
 docker compose exec php php bin/phpunit --configuration=phpunit.xml.dist
+```
+Add Viewer Event:
+```
+curl -X POST http://localhost:8000/api/viewer-events \
+-H "Content-Type: application/json" \
+-d '{
+  "sessionId": "abc-123",
+  "userId": "user-456",
+  "eventType": "start",
+  "eventId": "evt-1",
+  "eventTimestamp": "2026-02-10T19:32:15.123Z",
+  "receivedAt": "2026-02-10T19:32:15.450Z",
+  "payload": {
+    "eventId": "event-2026-wrestling-finals",
+    "position": 0,
+    "quality": "1080p"
+  }
+}'
+```
+
+Get Active Session Count:
+```
+curl http://localhost:8000/api/events/event-2026-wrestling-finals/active-sessions
+```
+
+Get Session Details:
+
+```
+curl http://localhost:8000/api/sessions/abc-123
 ```
 
 ## Planned API Design
@@ -140,10 +179,32 @@ Internally, timestamp values used for querying and comparisons will be normalize
 If this were a production system, I would likely standardize even more aggressively, for example by storing epoch timestamps or a single database-friendly UTC format everywhere.
 
 ---
+## Tools That I Used
+- **ChatGPT**
+  - Infra Configurations
+    - Docker
+    - Doctrin DBAL
+    - SQLite
+    - PHPUnit
+      - For this one it was actually wrong about how to set it up because it was using an older version of PHPUnit
+  - Generating Tests
+  - Code Generation
+  - Rubber Ducking/Pair Programming
+  - Route design
+  - Database design
+- **PHPStorm as my IDE**
+  - Also has an AI assistant that helped me generate comments and did some code generation
+  - Has a built-in DBMS browser that I used to inspect the database
+- **Stack Overflow** for help with discovering PHPUnit congratulation issues I was having
+- **Google Gemini** for help with troubleshooting PHPUnit issues as well
+  
+All generated code was reviewed and adjusted manually.
+
+---
 ## Tradeoffs
 - Didn't use Doctrine ORM because I wanted to keep the architecture simple and easy to reason about. For a proof-of-concept, v1 I felt it wasn't necessary to make Doctrine entities and manage those with the ORM.
 - I didn't use DTOs and the ViewerEventIngestionService is bloated with validation and other domain logic I would distribute in Hydrator or Transformer classes.
-
+- Normally I would not commit my .env file to source control, but since this is a proof-of-concept, and there was no sensitive data in the .env file, I decided to commit it for simplicity.
 - I chose SQLite because the PRD explicitly pushed for a lightweight v1 and Symfony is request-scoped, so in-memory state would not be shared across requests. I gained simplicity, easy setup, and persistence across requests, but gave up production-grade concurrency and throughput. At larger scale, I’d likely move to Postgres, Redis, or a streaming architecture.
 - Raw events in watch_session_events, current session state in watch_sessions, I gained fast reads for active session counts and session details, but took on the complexity of maintaining a derived snapshot during ingestion. It’s a simpler version of an event-log-plus-projection approach.
 - I processed events directly in the request path. I gained clarity and easier reasoning for a v1, but I did not fully solve spike durability or high-throughput buffering. In production, I’d likely put a queue or log in front of the write path.
