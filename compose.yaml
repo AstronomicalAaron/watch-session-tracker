@@ -1,0 +1,21 @@
+services:
+  php:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: watch-session-php
+    working_dir: /app
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./:/app
+    environment:
+      APP_ENV: dev
+      DATABASE_URL: "sqlite:////app/var/data.db"
+    command: >
+      sh -c "
+        composer install &&
+        mkdir -p var &&
+        php bin/console app:db:init &&
+        php -S 0.0.0.0:8000 -t public
+      "
