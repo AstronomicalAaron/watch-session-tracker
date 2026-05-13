@@ -1,11 +1,9 @@
 # Watch Session Tracker
 Approximately 2–3 hours including testing and documentation.
 
-Proof-of-concept real-time watch session tracking service for FloSports.
+Proof-of-concept real-time watch session tracking service.
 
 This service ingests viewer events from a player SDK, tracks active watch sessions, and exposes query endpoints for active viewer counts and session details.
-
-The goal of this implementation is to satisfy the core requirements of the PRD with a simple, understandable architecture that is easy to discuss and extend.
 
 ---
 ## Technologies Used
